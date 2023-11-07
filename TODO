@@ -1,0 +1,2 @@
+only use pressure data if heelToToe is on heel (0.4-0.5 or something)
+show histogram of pressure sent (send 100 of each kg, no more)

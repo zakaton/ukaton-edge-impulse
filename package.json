@@ -1,0 +1,26 @@
+{
+  "name": "ukaton-edge-impulse",
+  "version": "0.0.1",
+  "description": "Uploading data from the Ukaton Smart Insoles to Edge Impulse for weight detection",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.2",
+    "socket.io": "^4.4.1",
+    "request": "^2.88.2"
+  },
+  "engines": {
+    "node": "12.x"
+  },
+  "repository": {
+    "url": "https://glitch.com/edit/#!/ukaton-edge-impulse"
+  },
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "glitch",
+    "express"
+  ]
+}

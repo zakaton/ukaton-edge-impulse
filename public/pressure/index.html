@@ -1,0 +1,427 @@
+<html>
+  <head>
+    <title>Ukaton Missions | Pressure</title>
+    <link
+      rel="icon"
+      href="https://cdn.glitch.com/024019a9-317f-4462-b4f9-7674047a399c%2Fukaton_no_text_low.png?v=1595095184886"
+    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r118/three.min.js"></script>
+    <script src="/src/BaseMission.js"></script>
+    <script src="/src/BluetoothMissionDevice.js"></script>
+    <script src="/src/WebSocketMissionDevice.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+
+  <style>
+    .mirror {
+      transform: scaleX(-1);
+    }
+
+    label {
+      display: block;
+      user-select: none;
+    }
+
+    input[type="number"] {
+      width: 100px;
+    }
+
+    .visuals {
+      display: flex;
+      flex-direction: row;
+      width: 320px;
+      height: 400px;
+      margin: auto;
+      position: relative;
+    }
+
+    .visuals img {
+      object-fit: stretch;
+      width: 100%;
+      height: 100%;
+    }
+
+    .visuals .right img {
+      transform: scaleX(-1);
+    }
+
+    .visuals > div {
+      position: relative;
+      flex: 1;
+    }
+    .sensor {
+      background-color: red;
+      width: 17%;
+      height: 6%;
+      position: absolute;
+      left: 0%;
+      top: 0%;
+      opacity: 0.3;
+      z-index: 2;
+    }
+
+    .visuals .centerOfMass {
+      position: absolute;
+      width: 1%;
+      height: 1%;
+      left: 0;
+      top: 0;
+      z-index: 3;
+      border-radius: 50%;
+    }
+
+    .visuals > .centerOfMass {
+      z-index: 4;
+      background-color: green;
+      box-shadow: 0 0 4px 12px green;
+    }
+
+    .side > .centerOfMass {
+      background-color: orange;
+      box-shadow: 0 0 4px 12px orange;
+    }
+
+    .heel-to-toe {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+
+      display: flex;
+      flex-direction: column;
+      opacity: 0.2;
+
+      z-index: 3;
+    }
+
+    .heel-to-toe > div {
+      flex: 1;
+    }
+
+    .heel-to-toe .top {
+      background-color: yellow;
+    }
+    .heel-to-toe .bottom {
+      background-color: teal;
+    }
+    
+    .weight.data span {
+      font-size: 72px;
+      font-weight: bold;
+    }
+
+    /*
+    #ui.iframe > :not(.visuals) {
+      display: none;
+    }
+    body.iframe {
+      margin: 0;
+      padding: 0;
+    }
+    #ui.iframe > .visuals {
+      width: 100%;
+      height: 100%;
+    }
+    */
+  </style>
+
+  <body>
+    <div id="ui">
+      <h1>Ukaton Missions | Pressure</h1>
+
+      <hr />
+
+      <div class="connect">
+        <h2>Connect</h2>
+
+        <label class="connectionType">
+          connection type:
+          <select>
+            <option>bluetooth</option>
+            <option>websocket</option>
+          </select>
+        </label>
+
+        <br />
+        <label class="gateway1"> gateway1: <input /> </label>
+        <br />
+        <label class="gateway2"> gateway2: <input /> </label>
+        <br />
+
+        <span class="left">
+          <input type="button" class="mirror" value="👟" />
+        </span>
+
+        <span class="right">
+          <input type="button" class="right" value="👟" />
+        </span>
+      </div>
+
+      <hr />
+
+      <div class="pressure">
+        <h2>Pressure</h2>
+
+        <div class="left">
+          <h3>Left</h3>
+
+          <label class="enable pressure">
+            pressure enabled <input type="checkbox" disabled />
+          </label>
+          <label class="enable weight">
+            weight enabled <input type="checkbox" disabled />
+          </label>
+          <label class="weight data">
+            weight (kg): <span></span>
+          </label>
+        </div>
+        <div class="right">
+          <h3>Right</h3>
+
+          <label class="enable pressure">
+            pressure enabled <input type="checkbox" disabled />
+          </label>
+          <label class="enable weight">
+            weight enabled <input type="checkbox" disabled />
+          </label>
+          <label class="weight data">
+            weight (kg): <span></span>
+          </label>
+        </div>
+      </div>
+
+      <hr />
+
+      <div class="visuals">
+        <div class="centerOfMass"></div>
+
+        <div class="left side">
+          <div class="centerOfMass"></div>
+
+          <div class="sensor" style="left: 55%; top: 9.3%"></div>
+          <div class="sensor" style="left: 27%; top: 13%"></div>
+          <div class="sensor" style="left: 65.9%; top: 18.1%"></div>
+          <div class="sensor" style="left: 38.6%; top: 21.6%"></div>
+          <div class="sensor" style="left: 13.1%; top: 24.1%"></div>
+          <div class="sensor" style="left: 59.9%; top: 27.6%"></div>
+          <div class="sensor" style="left: 36%; top: 31.3%"></div>
+          <div class="sensor" style="left: 12.2%; top: 35.8%"></div>
+          <div class="sensor" style="left: 43.3%; top: 42.2%"></div>
+          <div class="sensor" style="left: 10.6%; top: 46.3%"></div>
+          <div class="sensor" style="left: 38%; top: 64%"></div>
+          <div class="sensor" style="left: 10.6%; top: 64%"></div>
+          <div class="sensor" style="left: 38%; top: 72.7%"></div>
+          <div class="sensor" style="left: 11%; top: 72.6%"></div>
+          <div class="sensor" style="left: 38.2%; top: 88.3%"></div>
+          <div class="sensor" style="left: 11.6%; top: 88.3%"></div>
+
+          <div class="heel-to-toe">
+            <div class="top"></div>
+            <div class="bottom"></div>
+          </div>
+
+          <img
+            src="https://cdn.glitch.com/024019a9-317f-4462-b4f9-7674047a399c%2Finsole.png?v=1610331890536"
+          />
+        </div>
+
+        <div class="right side">
+          <div class="centerOfMass"></div>
+
+          <div class="sensor" style="left: 27.8%; top: 9.3%"></div>
+          <div class="sensor" style="left: 56%; top: 13%"></div>
+          <div class="sensor" style="left: 17.6%; top: 18%"></div>
+          <div class="sensor" style="left: 44.9%; top: 21.5%"></div>
+          <div class="sensor" style="left: 70%; top: 24.2%"></div>
+          <div class="sensor" style="left: 23%; top: 27.6%"></div>
+          <div class="sensor" style="left: 47.6%; top: 31.3%"></div>
+          <div class="sensor" style="left: 70.7%; top: 35.8%"></div>
+          <div class="sensor" style="left: 40.1%; top: 42.1%"></div>
+          <div class="sensor" style="left: 72.5%; top: 46.4%"></div>
+          <div class="sensor" style="left: 45.1%; top: 64%"></div>
+          <div class="sensor" style="left: 72.5%; top: 64%"></div>
+          <div class="sensor" style="left: 45.1%; top: 72.6%"></div>
+          <div class="sensor" style="left: 72.5%; top: 72.6%"></div>
+          <div class="sensor" style="left: 45%; top: 88.4%"></div>
+          <div class="sensor" style="left: 72%; top: 88.4%"></div>
+
+          <div class="heel-to-toe">
+            <div class="top"></div>
+            <div class="bottom"></div>
+          </div>
+
+          <img
+            src="https://cdn.glitch.com/024019a9-317f-4462-b4f9-7674047a399c%2Finsole.png?v=1610331890536"
+          />
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    if (location.protocol != "https:")
+      location.replace(
+        `https:${location.href.substring(location.protocol.length)}`
+      );
+
+    if (window.parent !== window) {
+      document.getElementById("ui").classList.add("iframe");
+      document.body.classList.add("iframe");
+    }
+
+    const url = new URL(location);
+
+    let connectionType = url.searchParams.get("connectionType") || "bluetooth";
+    const missions =
+      connectionType == "bluetooth"
+        ? new BluetoothMissions()
+        : new WebSocketMissions();
+
+    const connectionTypeSelect = document.querySelector(".connect select");
+    connectionTypeSelect.addEventListener("input", (event) => {
+      connectionType = event.target.value;
+      console.log("connection type", connectionType);
+      url.searchParams.set("connectionType", connectionType);
+      location = url.href;
+    });
+    connectionTypeSelect.value = connectionType;
+
+    function insertUrlParam(key, value) {
+      if (history.pushState) {
+        let searchParams = new URLSearchParams(window.location.search);
+        searchParams.set(key, value);
+        let newurl =
+          window.location.protocol +
+          "//" +
+          window.location.host +
+          window.location.pathname +
+          "?" +
+          searchParams.toString();
+        window.history.pushState({ path: newurl }, "", newurl);
+      }
+    }
+
+    let gateway1 = url.searchParams.get("gateway1") || "0.0.0.0";
+    console.log("gateway1", gateway1);
+    const gateway1Input = document.querySelector(".connect .gateway1 input");
+    gateway1Input.addEventListener("input", (event) => {
+      gateway1 = event.target.value;
+      console.log("new gateway1", gateway1);
+      url.searchParams.set("gateway1", gateway1);
+      insertUrlParam("gateway1", gateway1);
+    });
+    gateway1Input.value = gateway1;
+    if (connectionType != "websocket") {
+      gateway1Input.closest("label").style.display = "none";
+    } else {
+      gateway1Input.closest("label").style.display = "";
+    }
+
+    let gateway2 = url.searchParams.get("gateway2") || "0.0.0.0";
+    console.log("gateway2", gateway2);
+    const gateway2Input = document.querySelector(".connect .gateway2 input");
+    gateway2Input.addEventListener("input", (event) => {
+      gateway2 = event.target.value;
+      console.log("new gateway2", gateway2);
+      url.searchParams.set("gateway2", gateway2);
+      insertUrlParam("gateway2", gateway2);
+    });
+    gateway2Input.value = gateway2;
+    if (connectionType != "websocket") {
+      gateway2Input.closest("label").style.display = "none";
+    } else {
+      gateway2Input.closest("label").style.display = "";
+    }
+
+    window.missions = missions;
+    missions.sides.forEach((side) => {
+      document
+        .querySelector(`.connect .${side} input[type='button']`)
+        .addEventListener("click", (event) => {
+          if (connectionType == "bluetooth") {
+            missions[side].connect();
+          } else {
+            missions[side].connect(side == "left" ? gateway1 : gateway2);
+          }
+        });
+
+      missions[side].addEventListener("connected", (event) => {
+        document
+          .querySelectorAll(`.${side} [disabled]`)
+          .forEach((input) => (input.disabled = false));
+        document.querySelector(
+          `.connect .${side} input[type='button']`
+        ).disabled = true;
+
+        // PRESSURE SENSORS
+        document
+          .querySelector(`.pressure .${side} .enable.pressure input`)
+          .addEventListener("click", (event) => {
+            const enabled = event.target.checked;
+            missions[side].setSensorDataConfigurations({
+              pressure: {
+                pressureDoubleByte: enabled ? 20 : 0,
+              },
+            });
+          });
+
+        // WEIGHT
+        document
+          .querySelector(`.pressure .${side} .enable.weight input`)
+          .addEventListener("click", (event) => {
+            const enabled = event.target.checked;
+            missions[side].setWeightDataDelay(enabled ? 40 : 0);
+          });
+      });
+
+      const pressureSensorElements = Array.from(
+        document.querySelectorAll(`.${side} .sensor`)
+      );
+      missions[side].addEventListener("pressure", (event) => {
+        const { timestamp } = event.message;
+        const { pressure } = event.message;
+        pressure.forEach((sensor, index) => {
+          pressureSensorElements[index].style.opacity =
+            sensor.value *
+            missions[side].PressureDataScalars.pressureDoubleByte;
+        });
+
+        const _missions = event.missions || missions;
+
+        centerOfMassElement.style.left = `${
+          _missions.pressure.centerOfMass.x * 100
+        }%`;
+        centerOfMassElement.style.top = `${
+          _missions.pressure.centerOfMass.y * 100
+        }%`;
+
+        document.querySelector(
+          `.visuals .${side} .heel-to-toe .top`
+        ).style.flex = pressure.centerOfMass.y;
+        document.querySelector(
+          `.visuals .${side} .heel-to-toe .bottom`
+        ).style.flex = 1 - pressure.centerOfMass.y;
+
+        // local center
+        document.querySelector(
+          `.visuals .${side} .centerOfMass`
+        ).style.left = `${pressure.centerOfMass.x * 100}%`;
+        document.querySelector(
+          `.visuals .${side} .centerOfMass`
+        ).style.top = `${pressure.centerOfMass.y * 100}%`;
+      });
+
+      const weightSpan = document.querySelector(
+        `.pressure .${side} .weight.data span`
+      );
+      missions[side].addEventListener("weight", (event) => {
+        const { timestamp } = event.message;
+        const { weight } = event.message;
+        weightSpan.innerText = weight.toFixed(2);
+      });
+    });
+
+    const centerOfMassElement = document.querySelector(".centerOfMass");
+  </script>
+</html>
