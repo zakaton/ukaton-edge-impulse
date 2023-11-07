@@ -1,0 +1,203 @@
+<html>
+  <head>
+    <title>Ukaton Missions | Edge Impulse</title>
+    <link
+      rel="icon"
+      href="https://cdn.glitch.com/024019a9-317f-4462-b4f9-7674047a399c%2Fukaton_no_text_low.png?v=1595095184886"
+    />
+    <script
+      src="https://cdn.socket.io/4.4.1/socket.io.min.js"
+      integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <style>
+    body {
+      margin: 0;
+    }
+
+    #container {
+      width: 100%;
+      height: 100%;
+
+      display: grid;
+      grid-template-areas:
+        "title title"
+        "pressure wii-balance-board";
+      grid-template-rows: 60px 1fr;
+    }
+
+    #title {
+      grid-area: title;
+      margin: auto;
+    }
+    #title * {
+      margin: 0;
+      text-align: center;
+    }
+
+    #controls:not(.manualUpload) .manualUpload {
+      display: none;
+    }
+    #controls > label:not(:last-child)::after {
+      content: " | ";
+    }
+
+    #pressure {
+      grid-area: pressure;
+    }
+    #wiiBalanceBoard {
+      grid-area: wii-balance-board;
+    }
+    .fill {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  <body>
+    <div id="container">
+      <div id="title">
+        <h1>Ukaton x Edge Impulse</h1>
+        <div id="controls">
+          <label>
+            data type:
+            <select oninput="onDataTypeInput(event)">
+              <option selected>training</option>
+              <option>testing</option>
+            </select>
+          </label>
+          <label
+            >auto-upload:
+            <input type="checkbox" checked oninput="toggleAutoUpload(event)"
+          /></label>
+          <label class="manualUpload"
+            >upload next data:
+            <input type="checkbox" oninput="toggleManualUpload(event)"
+          /></label>
+        </div>
+      </div>
+      <iframe id="pressure" class="fill" src="/pressure"></iframe>
+      <iframe
+        id="wiiBalanceBoard"
+        class="fill"
+        src="/wii-balance-board"
+      ></iframe>
+    </div>
+  </body>
+  <script>
+    const data = {
+      pressure: null,
+      weight: null,
+      macAddress: "0.0.0.0",
+      type: "training",
+    };
+    const hasDataUpdated = {
+      pressure: false,
+      weight: false,
+      isFullyUpdated() {
+        return this.pressure && this.weight;
+      },
+      reset() {
+        this.pressure = this.weight = false;
+      },
+    };
+    function updateData(name, datum) {
+      data[name] = datum;
+      hasDataUpdated[name] = true;
+      console.log("updating:", name);
+      if (hasDataUpdated.isFullyUpdated()) {
+        uploadData();
+        hasDataUpdated.reset();
+      }
+    }
+
+    function onDataTypeInput(event) {
+      data.type = event.target.value;
+      console.log("updated data type:", data.type);
+    }
+
+    const socket = new io();
+    socket.addEventListener("connect", () => {
+      console.log("connected to socket.io server");
+    });
+
+    let autoUpload = true;
+    let manualUpload = false;
+    const controlsContainer = document.getElementById("controls");
+    function toggleAutoUpload(event) {
+      autoUpload = event.target.checked;
+      if (!autoUpload) {
+        controlsContainer.classList.add("manualUpload");
+      } else {
+        controlsContainer.classList.remove("manualUpload");
+      }
+      console.log("updated auto upload", autoUpload);
+    }
+    const manualUploadCheckbox = controlsContainer.querySelector(".manualUpload input")
+    function toggleManualUpload(event) {
+      manualUpload = event.target.checked;
+      console.log("updated manual upload", manualUpload);
+    }
+    function uploadData() {
+      if (socket.connected && (autoUpload || manualUpload)) {
+        shouldUpload = false;
+        socket.emit("data", data);
+        console.log("uploaded data:", data.pressure, data.weight);
+        manualUploadCheckbox.checked = manualUpload = false;
+      }
+    }
+
+    const iframeNames = ["pressure", "wiiBalanceBoard"];
+    const iframes = {};
+    const windows = {};
+
+    let missions;
+    let missionSide;
+    let missionDevice;
+    const onLoads = {
+      pressure: (event) => {
+        missions = windows.pressure.missions;
+        missions.sides.forEach((side) => {
+          const _missionDevice = missions[side];
+          _missionDevice.addEventListener("connected", async (event) => {
+            if (!missionDevice) {
+              missionDevice = _missionDevice;
+              missionSide = side;
+              windows.pressure.document
+                .querySelectorAll("input[type='button']")
+                .forEach((button) => (button.disabled = true));
+
+              data.macAddress = await missionDevice.getWifiMACAddress();
+
+              missionDevice.addEventListener("pressure", (event) => {
+                const { pressure } = event.message;
+                const pressureData = [];
+                updateData(
+                  "pressure",
+                  pressure.map(({ value }) => value)
+                );
+              });
+            }
+          });
+        });
+      },
+      wiiBalanceBoard: (event) => {
+        windows.wiiBalanceBoard.addEventListener("weights", (event) => {
+          weight = event.detail.weights.total;
+          if (!isNaN(weight) && weight >= 1) {
+            updateData("weight", weight);
+          }
+        });
+      },
+    };
+
+    iframeNames.forEach((name) => {
+      iframes[name] = document.getElementById(name);
+      windows[name] = iframes[name].contentWindow;
+      windows[name].onload = (event) => {
+        console.log("iframe loaded:", name);
+        onLoads[name](event);
+      };
+    });
+  </script>
+</html>
